@@ -40,7 +40,7 @@ function exportReport() {
 }
 
 function createShareButtons(rapport) {
-  const rapportText = JSON.stringify(rapport, null, 2);
+  const rapportText = formatReportText(rapport);
   const output = document.getElementById("output");
 
   const mailBtn = document.createElement("button");
