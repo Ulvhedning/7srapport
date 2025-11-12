@@ -87,3 +87,21 @@ function getNextReportNumber() {
   localStorage.setItem("reportCounter", current);
   return current;
 }
+function formatReportText(rapport) {
+  return `
+🛰️ 7S-RAPPORT RPAS
+📌 ID: ${rapport.id}
+📅 Tidpunkt: ${rapport.stund}
+📍 Plats: ${rapport.stalle}
+👥 Styrka: ${rapport.styrka}
+🚛 Typ: ${rapport.slag}
+⚙️ Aktivitet: ${rapport.sysselsattning}
+🏷️ Märkning: ${rapport.symbol}
+🧑‍✈️ Sagesman: ${rapport.sagesman}
+
+🎯 Spaningsfråga:
+${rapport.spaningsfraga}
+
+🕓 Rapport skapad: ${rapport.timestamp}
+`;
+}
