@@ -77,3 +77,13 @@ function searchReportById(id) {
     document.getElementById("output").textContent = `❌ Ingen rapport med ID: ${id}`;
   }
 }
+function getNextReportNumber() {
+  let current = localStorage.getItem("reportCounter");
+  if (!current) {
+    current = 1000;
+  } else {
+    current = parseInt(current) + 1;
+  }
+  localStorage.setItem("reportCounter", current);
+  return current;
+}
