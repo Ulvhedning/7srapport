@@ -141,4 +141,329 @@
       border: 1px solid #333;
       min-height: 120px;
       font-size: 0.95em;
-   
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 0.9em;
+      margin-top: 8px;
+    }
+
+    /* Mikrofonknapp */
+    .mic-btn {
+      font-size: 1.1em;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header med logga/foto: ersätt src med din faktiska fil/URL -->
+    <header class="header">
+      <!-- Tips: lägg bilden i repo och referera som ./assets/mrpas-operator.png -->
+      <img src="./header-operator.png" alt="MRPAS Operatör" class="header-img" />
+      <!-- Du kan även lägga till befälhavare-emblem bredvid om du vill -->
+      <!-- <img src="./header-befalhavare.png" alt="MRPAS Befälhavare" class="header-img" /> -->
+    </header>
+
+    <h1>7S-RAPPORT RPAS</h1>
+
+    <form id="rapportForm" onsubmit="return false;">
+      <!-- Spaningsfråga -->
+      <fieldset>
+        <legend>🎯 Spaningsfråga</legend>
+        <small>Vad vill vi få svar på med denna spaning?</small>
+        <div class="row">
+          <textarea id="spaningsfraga" placeholder="Beskriv uppgiften/NAI/PRI..."></textarea>
+          <button type="button" class="mic-btn" onclick="startVoiceForField('spaningsfraga')">🎤</button>
+        </div>
+      </fieldset>
+
+      <!-- 1. Stund -->
+      <fieldset>
+        <legend>1. 🕒 Stund</legend>
+        <small>Tidpunkt – När observationen gjordes (ex: 121500Z)</small>
+        <div class="row">
+          <textarea id="stund" placeholder="Ex: 121500Z"></textarea>
+          <button type="button" class="mic-btn" onclick="startVoiceForField('stund')">🎤</button>
+        </div>
+      </fieldset>
+
+      <!-- 2. Ställe -->
+      <fieldset>
+        <legend>2. 📍 Ställe</legend>
+        <small>Plats – Var observationen gjordes (ex: väg B–C, MGRS XX1234)</small>
+        <div class="row">
+          <textarea id="stalle" placeholder="Ex: MGRS 33V XH 1234 5678"></textarea>
+          <button type="button" class="mic-btn" onclick="startVoiceForField('stalle')">🎤</button>
+        </div>
+      </fieldset>
+
+      <!-- 3. Styrka -->
+      <fieldset>
+        <legend>3. 👥 Styrka</legend>
+        <small>Antal – Hur många som observerades (ex: 2 fordon, 6 personer)</small>
+        <div class="row">
+          <textarea id="styrka" placeholder="Ex: 2 fordon, 6 personer"></textarea>
+          <button type="button" class="mic-btn" onclick="startVoiceForField('styrka')">🎤</button>
+        </div>
+      </fieldset>
+
+      <!-- 4. Slag -->
+      <fieldset>
+        <legend>4. 🚛 Slag</legend>
+        <small>Typ – Modell av fordon, truppslag eller händelsetyp</small>
+        <div class="row">
+          <textarea id="slag" placeholder="Ex: pansarterrängbil, infanteri"></textarea>
+          <button type="button" class="mic-btn" onclick="startVoiceForField('slag')">🎤</button>
+        </div>
+      </fieldset>
+
+      <!-- 5. Sysselsättning -->
+      <fieldset>
+        <legend>5. ⚙️ Sysselsättning</legend>
+        <small>Aktivitet – Vad de gjorde</small>
+        <div class="row">
+          <textarea id="sysselsattning" placeholder="Ex: lastar materiel, marschförberedelser"></textarea>
+          <button type="button" class="mic-btn" onclick="startVoiceForField('sysselsattning')">🎤</button>
+        </div>
+      </fieldset>
+
+      <!-- 6. Symbol -->
+      <fieldset>
+        <legend>6. 🏷️ Symbol</legend>
+        <small>Märkning – Nummer, färg, emblem, utseende</small>
+        <div class="row">
+          <textarea id="symbol" placeholder="Ex: blå markering, siffror på fordon"></textarea>
+          <button type="button" class="mic-btn" onclick="startVoiceForField('symbol')">🎤</button>
+        </div>
+      </fieldset>
+
+      <!-- 7. Sagesman -->
+      <fieldset>
+        <legend>7. 🧑‍✈️ Sagesman</legend>
+        <small>Vem – Vem som gjort iakttagelsen (ex: RPAS-operatör, plattform)</small>
+        <div class="row">
+          <textarea id="sagesman" placeholder="Ex: RPAS operatör Alfa, ANAFI USA"></textarea>
+          <button type="button" class="mic-btn" onclick="startVoiceForField('sagesman')">🎤</button>
+        </div>
+      </fieldset>
+
+      <!-- Bilaga -->
+      <fieldset>
+        <legend>📎 Bilaga</legend>
+        <small>Bifoga en bild eller fil som hör till rapporten</small>
+        <input type="file" id="bilaga" accept="image/*,.pdf,.doc,.txt" />
+      </fieldset>
+
+      <!-- Export-knapp -->
+      <div class="actions">
+        <button type="button" class="primary" onclick="exportReport()">📤 Exportera rapport</button>
+      </div>
+    </form>
+
+    <h2 style="margin-top:16px;">Export</h2>
+    <div class="actions" id="shareActions"></div>
+    <pre id="output"></pre>
+    <div class="footer-note">Tip: Efter export, använd knapparna för Mail, SMS, Utskrift eller PDF.</div>
+  </div>
+
+  <script>
+    // ===== Räknare för rapportnummer (start 1000) =====
+    function getNextReportNumber() {
+      let current = localStorage.getItem("reportCounter");
+      if (!current) {
+        current = 1000;
+      } else {
+        current = parseInt(current, 10) + 1;
+      }
+      localStorage.setItem("reportCounter", current);
+      return current;
+    }
+
+    // ===== Generera rapport-ID =====
+    function generateReportId() {
+      const number = getNextReportNumber();
+      return `RPAS_${number}`;
+    }
+
+    // ===== Röstinmatning för specifikt fält =====
+    function startVoiceForField(fieldId) {
+      try {
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = "sv-SE";
+        recognition.start();
+        recognition.onresult = function(event) {
+          const text = event.results[0][0].transcript;
+          const el = document.getElementById(fieldId);
+          el.value = (el.value ? el.value + " " : "") + text;
+        };
+      } catch (e) {
+        alert("Röstinmatning stöds inte i denna webbläsare.");
+      }
+    }
+
+    // ===== Exportera rapport =====
+    function exportReport() {
+      const rapport = {
+        id: generateReportId(),
+        spaningsfraga: document.getElementById("spaningsfraga").value.trim(),
+        stund: document.getElementById("stund").value.trim(),
+        stalle: document.getElementById("stalle").value.trim(),
+        styrka: document.getElementById("styrka").value.trim(),
+        slag: document.getElementById("slag").value.trim(),
+        sysselsattning: document.getElementById("sysselsattning").value.trim(),
+        symbol: document.getElementById("symbol").value.trim(),
+        sagesman: document.getElementById("sagesman").value.trim(),
+        timestamp: new Date().toISOString()
+      };
+
+      // Bilaga
+      const fileInput = document.getElementById("bilaga");
+      if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        rapport.bilaga = fileInput.files[0].name; // vi sparar filnamn i exporten
+      } else {
+        rapport.bilaga = "Ingen";
+      }
+
+      // Visa JSON
+      document.getElementById("output").textContent = JSON.stringify(rapport, null, 2);
+
+      // Skapa delningsknappar
+      createShareButtons(rapport);
+    }
+
+    // ===== Formatera rapporttext för delning (mail/SMS/print) =====
+    function formatReportText(rapport) {
+      return `
+🛰️ 7S-RAPPORT RPAS
+📌 ID: ${rapport.id}
+📅 Tidpunkt: ${rapport.stund}
+📍 Plats: ${rapport.stalle}
+👥 Styrka: ${rapport.styrka}
+🚛 Typ: ${rapport.slag}
+⚙️ Aktivitet: ${rapport.sysselsattning}
+🏷️ Märkning: ${rapport.symbol}
+🧑‍✈️ Sagesman: ${rapport.sagesman}
+
+🎯 Spaningsfråga:
+${rapport.spaningsfraga}
+
+📎 Bilaga: ${rapport.bilaga}
+🕓 Skapad: ${rapport.timestamp}
+`.trim();
+    }
+
+    // ===== Knappar för delning =====
+    function createShareButtons(rapport) {
+      const share = document.getElementById("shareActions");
+      share.innerHTML = ""; // rensa tidigare knappar
+
+      const rapportText = formatReportText(rapport);
+
+      // Mail
+      const mailBtn = document.createElement("button");
+      mailBtn.textContent = "📧 Maila";
+      mailBtn.onclick = () => {
+        window.location.href = `mailto:?subject=7S-RAPPORT ${rapport.id}&body=${encodeURIComponent(rapportText)}`;
+      };
+
+      // SMS
+      const smsBtn = document.createElement("button");
+      smsBtn.textContent = "📱 SMS";
+      smsBtn.onclick = () => {
+        window.location.href = `sms:?body=${encodeURIComponent(rapportText)}`;
+      };
+
+      // Skriv ut
+      const printBtn = document.createElement("button");
+      printBtn.textContent = "🖨️ Skriv ut";
+      printBtn.onclick = () => {
+        const win = window.open("", "", "width=800,height=900");
+        win.document.write(`<pre style="font-family:monospace;white-space:pre-wrap;">${rapportText}</pre>`);
+        win.document.close();
+        win.focus();
+        win.print();
+      };
+
+      // PDF
+      const pdfBtn = document.createElement("button");
+      pdfBtn.textContent = "📄 PDF";
+      pdfBtn.onclick = () => exportPDF(rapport);
+
+      share.appendChild(mailBtn);
+      share.appendChild(smsBtn);
+      share.appendChild(printBtn);
+      share.appendChild(pdfBtn);
+    }
+
+    // ===== PDF-export med logga =====
+    function exportPDF(rapport) {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Ladda logga från header (använder första bildens src)
+        const headerImg = document.querySelector(".header-img");
+        const src = headerImg ? headerImg.src : null;
+
+        if (!src) {
+          // Ingen bild hittad – fortsätt med text
+          drawPdfContent(doc, rapport, null);
+          doc.save(`${rapport.id}.pdf`);
+        } else {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = src;
+          img.onload = function() {
+            drawPdfContent(doc, rapport, img);
+            doc.save(`${rapport.id}.pdf`);
+          };
+          img.onerror = function() {
+            // Om bilden inte kan laddas: fortsätt utan logga
+            drawPdfContent(doc, rapport, null);
+            doc.save(`${rapport.id}.pdf`);
+          };
+        }
+      } catch (e) {
+        alert("PDF-export misslyckades: " + e.message);
+      }
+    }
+
+    // Rita PDF-innehåll
+    function drawPdfContent(doc, rapport, img) {
+      if (img) {
+        // Logga uppe till vänster
+        doc.addImage(img, "PNG", 10, 10, 30, 30);
+      }
+      // Titel
+      doc.setFontSize(18);
+      doc.text("7S-RAPPORT RPAS", 46, 20);
+
+      // Innehåll
+      doc.setFontSize(12);
+      let y = 50;
+      const line = (label, value) => {
+        doc.text(`${label}: ${value || "-"}`, 10, y);
+        y += 8;
+      };
+
+      line("ID", rapport.id);
+      line("Tidpunkt", rapport.stund);
+      line("Plats", rapport.stalle);
+      line("Styrka", rapport.styrka);
+      line("Typ", rapport.slag);
+      line("Aktivitet", rapport.sysselsattning);
+      line("Märkning", rapport.symbol);
+      line("Sagesman", rapport.sagesman);
+
+      doc.text("Spaningsfråga:", 10, y + 4);
+      doc.text(rapport.spaningsfraga || "-", 10, y + 12, { maxWidth: 190 });
+      y += 28;
+
+      line("Bilaga", rapport.bilaga);
+      line("Skapad", rapport.timestamp);
+    }
+  </script>
+</body>
+</html>
