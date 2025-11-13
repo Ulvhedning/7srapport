@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>7S-RAPPORT MRPAS</title>
+<script src="https://unpkg.com/mgrs@1.0.0/mgrs.js"></script>
 
   <!-- jsPDF för PDF-export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -248,11 +249,12 @@
         </div>
       </fieldset>
       
-<fieldset>
-  <legend>📍 Plats av intresse</legend>
-  <input type="text" id="plats" placeholder="Ex: 59.3293, 18.0686" />
-  <button onclick="openInMaps()">Öppna i Google Maps</button>
+<<fieldset>
+  <legend>📍 Plats av intresse (MGRS)</legend>
+  <input type="text" id="mgrs" placeholder="Ex: 33V XH 12345 67890" />
+  <button onclick="openMGRS()">Öppna i Google Maps</button>
 </fieldset>
+
 
       <!-- Bilaga -->
       <fieldset>
