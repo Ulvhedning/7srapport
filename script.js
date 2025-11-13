@@ -183,6 +183,15 @@ function exportPDF(rapport) {
     doc.save(`${rapport.id}.pdf`);
   }
 }
+function openInMaps() {
+  const plats = document.getElementById("plats").value.trim();
+  if (!plats) return alert("Skriv in koordinater först!");
+
+  // Kontrollera om det är lat,long eller MGRS eller annan form
+  // Här antar vi lat,long (ex: 59.3293, 18.0686)
+  const url = `https://www.google.com/maps?q=${encodeURIComponent(plats)}`;
+  window.open(url, "_blank");
+}
 
 // Formatera rapporttext för delning
 function formatReportText(rapport) {
