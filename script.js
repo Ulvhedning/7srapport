@@ -111,6 +111,78 @@ function exportPDF(rapport) {
     doc.save(`${rapport.id}.pdf`);
   }
 }
+function exportPDF(rapport) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF(); // Första sidan: stående
+
+  // Logga (valfri)
+  const headerImg = document.querySelector(".header-img");
+  if (headerImg) {
+    doc.addImage(headerImg.src, "PNG", 10, 10, 30, 30);
+  }
+
+  doc.setFontSize(18);
+  doc.text("7S-RAPPORT RPAS", 50, 20);
+
+  doc.setFontSize(12);
+  let y = 50;
+  const line = (label, value) => {
+    doc.text(`${label}: ${value || "-"}`, 10, y);
+    y += 8;
+  };
+
+  line("ID", rapport.id);
+  line("Tidpunkt", rapport.stund);
+  line("Plats", rapport.stalle);
+  line("Styrka", rapport.styrka);
+  line("Typ", rapport.slag);
+  line("Aktivitet", rapport.sysselsattning);
+  line("Märkning", rapport.symbol);
+  line("Sagesman", rapport.sagesman);
+
+  doc.text("Spaningsfråga:", 10, y + 4);
+  doc.text(rapport.spaningsfraga || "-", 10, y + 12, { maxWidth: 180 });
+  y += 28;
+
+  line("Skapad", rapport.timestamp);
+
+  const fileInput = document.getElementById("bilaga");
+  if (fileInput && fileInput.files.length > 0) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const imgData = e.target.result;
+
+      // Lägg till ny sida i liggande format
+      doc.addPage("a4", "landscape");
+      doc.setFontSize(16);
+      doc.text("📎 Bilaga", 10, 20);
+
+      // Anpassa bild till sidan
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const maxWidth = pageWidth - margin * 2;
+      const maxHeight = pageHeight - 40;
+
+      const img = new Image();
+      img.onload = function () {
+        const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+        const imgWidth = img.width * ratio;
+        const imgHeight = img.height * ratio;
+        const x = (pageWidth - imgWidth) / 2;
+        const y = 30;
+
+        doc.addImage(imgData, "JPEG", x, y, imgWidth, imgHeight);
+        doc.save(`${rapport.id}.pdf`);
+      };
+      img.src = imgData;
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+  } else {
+    doc.text("Bilaga: Ingen", 10, y + 4);
+    doc.save(`${rapport.id}.pdf`);
+  }
+}
 
 // Formatera rapporttext för delning
 function formatReportText(rapport) {
