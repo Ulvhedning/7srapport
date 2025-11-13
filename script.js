@@ -183,14 +183,19 @@ function exportPDF(rapport) {
     doc.save(`${rapport.id}.pdf`);
   }
 }
-function openInMaps() {
-  const plats = document.getElementById("plats").value.trim();
-  if (!plats) return alert("Skriv in koordinater först!");
+function openMGRS() {
+  const input = document.getElementById("mgrs").value.trim();
+  if (!input) return alert("Skriv in en MGRS-koordinat!");
 
-  // Kontrollera om det är lat,long eller MGRS eller annan form
-  // Här antar vi lat,long (ex: 59.3293, 18.0686)
-  const url = `https://www.google.com/maps?q=${encodeURIComponent(plats)}`;
-  window.open(url, "_blank");
+  try {
+    const [lon, lat] = mgrs.toPoint(input); // [long, lat]
+    const url = `https://www.google.com/maps?q=${lat},${lon}`;
+    window.open(url, "_blank");
+  } catch (e) {
+    alert("Ogiltig MGRS-koordinat. Exempel: 33V XH 12345 67890");
+  }
+}
+
 }
 
 // Formatera rapporttext för delning
